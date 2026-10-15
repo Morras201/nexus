@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: tracklend
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      # Database (Turso) — set these in the Render dashboard, never commit them
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false
+      # Password for the site's browser login prompt (any username)
+      - key: APP_PASSWORD
+        sync: false
+      # Optional: email notifications
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: BUSINESS_NAME
+        value: TrackLend

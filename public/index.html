@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>TrackLend — ERP</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0F172A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TrackLend">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.4/css/boxicons.min.css">
+<link rel="stylesheet" href="styles.css">
+
+</head>
+<body>
+
+<!-- Boot splash — Mac-style: logo first, then the wordmark animates in,
+     shown for ~5s while script.js loads data in the background. -->
+<div class="boot-splash" id="bootSplash">
+  <div class="boot-logo"><img src="assets/logo.png" alt="TrackLend"/></div>
+  <div class="boot-loading-dots"><span></span><span></span><span></span><span></span></div>
+</div>
+
+<div id="appRoot" style="display:none;">
+<div class="shell">
+
+<!-- Top navigation bar (mockup-style): brand, page pills, search and
+     action buttons — ALL in one row at any screen size (see the .topnav
+     rules in styles.css). Replaces the old left sidebar + mobile
+     hamburger drawer; the same #nav* ids and .nav-item class are kept
+     so script.js's page switching works unchanged. -->
+<nav class="topnav" id="topNav" aria-label="Main navigation">
+  <a href="#" class="topnav-brand" id="topnavBrand">
+    <img src="assets/logo.png" alt="TrackLend"/>
+    <span class="topnav-brand-name">TrackLend</span>
+  </a>
+
+  <div class="navpills" id="navPills">
+    <a href="#" class="nav-item active" id="navDashboard">Analytics</a>
+    <a href="#" class="nav-item" id="navCustomers">Customers</a>
+    <a href="#" class="nav-item" id="navLoans">Loans</a>
+    <a href="#" class="nav-item" id="navExpenses">Expenses</a>
+    <a href="#" class="nav-item" id="navFinance">Finance</a>
+    <a href="#" class="nav-item" id="navRisk">Risk</a>
+  </div>
+
+
+  <!-- The one and only customer search box. A direct child of .topnav
+       (not inside .topnav-actions) so that on phones it can wrap onto
+       its own full-width row between the buttons and the pills. It is
+       the single search for the whole app: Enter scopes the dashboard
+       to a client, and on the Customers page it filters the list — the
+       old per-page search bars are gone. -->
+  <div class="search topnav-search" id="topnavSearch">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    <input id="searchInput" placeholder="Search customer..."/>
+  </div>
+
+  <div class="topnav-actions">
+    <button type="button" class="btn-primary" id="openModalBtnTop" title="New Loan">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+      <span>New Loan</span>
+    </button>
+    <!-- Search toggle: sits just to the right of the New Loan button.
+         Clicking it slides the customer search bar in from the left;
+         clicking it again fades it out and clears the search. Inline
+         SVG (grid-search glyph) so it renders even when the boxicons
+         stylesheet can't load. -->
+    <button type="button" class="topnav-search-toggle" id="searchToggleBtn"
+            title="Search customer" aria-label="Search customer"
+            aria-expanded="false" aria-controls="topnavSearch">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+        <circle cx="17" cy="17" r="3.4"/>
+        <path d="M19.6 19.6L22.5 22.5"/>
+      </svg>
+    </button>
+    <!-- Settings: keeps the #navSettings id + .nav-item class so
+         script.js's active-state toggling still applies (the button
+         fills black while the Settings page is open). -->
+    <a href="#" class="nav-item topnav-icon" id="navSettings" title="Settings" aria-label="Settings">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    </a>
+    <!-- Profile chip: was the sidebar footer's profile card. -->
+    <div class="topnav-profile" id="topnavProfile">
+      <div class="avatar" id="userAvatar">JF</div>
+      <div class="topnav-profile-text">
+        <div class="profile-name" id="userName">Jenis Fisher</div>
+        <div class="profile-role">Admin</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+
+  <div class="main">
+    <!-- No per-page heading row — the top navigation bar's active pill
+         already shows which page you're on. -->
+
+    <!-- Finance page customer-filter slide-in panel, same off-canvas
+         mechanism as the dashboard's client-panel above. -->
+    <div class="client-panel-backdrop" id="finCustomerPanelBackdrop"></div>
+    <div class="client-panel" id="finCustomerPanel">
+      <div class="client-panel-head">
+        <h2>Filter by customer</h2>
+        <button class="client-panel-close" id="finCustomerPanelClose" aria-label="Close">✕</button>
+      </div>
+      <div class="client-panel-list" id="finCustomerPanelList"></div>
+    </div>
+
+    <div id="dashboardPage">
+    <!-- The dashboard's own top strip (logo + search + export) is gone —
+         the global .topnav above now carries the brand, search, and
+         New Loan button on every page. -->
+
+    <div class="hero-card">
+      <div>
+        <div class="hero-greeting" id="heroGreeting">Good morning</div>
+        <div class="hero-amount" id="heroAmount">R0.00</div>
+        <div class="hero-sub" id="heroSubtext">Total disbursed this month</div>
+      </div>
+      <!-- Mirrors the mockup's hero CTA pair: ghost "export" button +
+           primary "New Loan" button. #exportCsvBtn keeps its id (moved
+           here from the removed dash-topnav) so its handler in script.js
+           is unchanged. -->
+      <div class="hero-cta">
+        <button class="btn-ghost" id="exportCsvBtn" title="Export loan book as CSV">⭳ Export .CSV</button>
+        <!-- Date-range picker (replaced the redundant hero "New Loan"
+             button — the top nav already has one). Scopes the hero total,
+             the four stat cards and the Disbursements Over Time chart. -->
+        <div class="date-range" id="dateRange">
+          <button type="button" class="btn-ghost date-range-trigger" id="dateRangeTrigger"
+                  aria-haspopup="listbox" aria-expanded="false" title="Change the reporting period">
+            <svg class="dr-cal" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/>
+            </svg>
+            <span id="dateRangeLabel">This month</span>
+            <svg class="dr-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </button>
+          <div class="date-range-menu" id="dateRangeMenu" role="listbox" aria-label="Reporting period">
+            <button type="button" class="date-range-option" role="option" data-mode="thisMonth">
+              <span>This month</span>
+              <svg class="dr-check" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>
+            </button>
+            <button type="button" class="date-range-option" role="option" data-mode="lastMonth">
+              <span>Last month</span>
+              <svg class="dr-check" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>
+            </button>
+            <button type="button" class="date-range-option" role="option" data-mode="last3">
+              <span>Last 3 months</span>
+              <svg class="dr-check" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>
+            </button>
+            <button type="button" class="date-range-option" role="option" data-mode="last6">
+              <span>Last 6 months</span>
+              <svg class="dr-check" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>
+            </button>
+            <button type="button" class="date-range-option" role="option" data-mode="custom" id="dateRangeCustomBtn">
+              <span>Custom range</span>
+              <svg class="dr-check" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>
+              <svg class="dr-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+            </button>
+            <!-- Custom range picker: revealed by "Custom range" instead of
+                 selecting a period straight away. -->
+            <div class="date-range-custom" id="dateRangeCustomPanel">
+              <label class="drc-field"><span>Start date</span><input type="date" id="dateRangeStart"/></label>
+              <label class="drc-field"><span>End date</span><input type="date" id="dateRangeEnd"/></label>
+              <div class="drc-error" id="dateRangeError"></div>
+              <div class="drc-actions">
+                <button type="button" class="btn-ghost drc-btn" id="dateRangeCancel">Cancel</button>
+                <button type="button" class="btn-primary drc-btn" id="dateRangeApply">Apply</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-grid" id="statGrid"></div>
+
+    <div class="panel-row">
+      <div class="card top-card">
+        <div class="chart-head">
+          <div>
+            <h2>Disbursements Over Time</h2>
+            <!-- Replaced by script.js with "Monthly totals · <year>". -->
+            <div class="panel-sub">Monthly totals</div>
+          </div>
+          <span class="disb-trend-pill" id="disbTrendPill"></span>
+        </div>
+        <div class="disb-chart-wrap">
+          <svg id="disbChart" viewBox="0 0 560 180" class="disb-chart-svg"></svg>
+        </div>
+      </div>
+      <div class="card sales-card">
+        <div class="chart-head">
+          <div>
+            <h2>Client Share of Book</h2>
+            <div class="panel-sub">By customer</div>
+          </div>
+        </div>
+        <div class="donut-wrap">
+          <svg id="clientDonut" viewBox="0 0 42 42" class="donut-svg"></svg>
+          <div class="legend" id="donutLegend"></div>
+        </div>
+      </div>
+    </div>
+    </div><!-- /#dashboardPage -->
+
+    <div id="settingsPage" style="display:none">
+      <div class="card settings-card-compact">
+        <div class="sc-head"><i class="ti ti-database" aria-hidden="true"></i><h3>Data</h3></div>
+
+        <div class="sc-row">
+          <span class="sc-label" title="Download your full loan book as an AES-256 encrypted backup, protected by a passphrase you set.">Encrypted backup</span>
+          <div class="sc-row-actions">
+            <button class="btn-secondary-pill" id="exportEncBtn">Export</button>
+          </div>
+        </div>
+        <div class="sc-subrow" id="scLastBackup">No backups yet — export one above.</div>
+
+        <div class="sc-row">
+          <span class="sc-label" title="Restore a previously exported AES-256 encrypted backup (.enc). You'll be asked for the passphrase used to encrypt it.">Restore backup</span>
+          <div class="sc-row-actions">
+            <select id="importMode" class="pill-select" style="width:190px;">
+              <option value="replace">Replace all data</option>
+              <option value="merge">Merge with current</option>
+            </select>
+            <input type="file" id="importFile" accept=".enc" style="display:none"/>
+            <button class="btn-secondary-pill" id="importBtn">Upload</button>
+          </div>
+        </div>
+
+        <div class="sc-row">
+          <span class="sc-label">Local storage used</span>
+          <span class="sc-value" id="scStorageUsage">—</span>
+        </div>
+
+        <div class="sc-row">
+          <span class="sc-label sc-label-danger">Clear all data</span>
+          <div class="sc-row-actions">
+            <button class="btn-secondary-pill sc-danger-btn" id="clearDataBtn">Clear</button>
+          </div>
+        </div>
+
+        <div id="scBackupHistoryWrap" style="display:none;">
+          <div class="sc-subhead">Recent backups</div>
+          <div id="scBackupHistory"></div>
+        </div>
+
+        <div class="settings-status" id="settingsStatus"></div>
+      </div>
+
+      <div class="card settings-card-compact">
+        <div class="sc-head"><i class="ti ti-bell" aria-hidden="true"></i><h3>Notifications</h3></div>
+
+        <div class="sc-row">
+          <span class="sc-label" title="Where notifications are sent. Separate multiple addresses with a comma.">Recipient email(s)</span>
+          <div class="sc-row-actions">
+            <input type="text" id="notifyEmailInput" class="pill-select" placeholder="business@example.com, manager@example.com" style="width:260px;"/>
+          </div>
+        </div>
+
+        <div class="sc-subhead">Notify me when</div>
+        <div class="sc-toggle-row"><span>A new loan is added</span><label class="sc-switch"><input type="checkbox" id="notifyNewLoan"/><span class="sc-switch-track"></span></label></div>
+        <div class="sc-toggle-row"><span>A repayment is due soon</span><label class="sc-switch"><input type="checkbox" id="notifyDueSoon"/><span class="sc-switch-track"></span></label></div>
+        <div class="sc-toggle-row"><span>A loan becomes overdue</span><label class="sc-switch"><input type="checkbox" id="notifyOverdue"/><span class="sc-switch-track"></span></label></div>
+        <div class="sc-toggle-row"><span>A document is uploaded</span><label class="sc-switch"><input type="checkbox" id="notifyDocUploaded"/><span class="sc-switch-track"></span></label></div>
+      </div>
+
+      <div class="card settings-card-compact">
+        <div class="sc-head"><i class="ti ti-refresh" aria-hidden="true"></i><h3>Loans</h3></div>
+        <div class="sc-row">
+          <span class="sc-label" title="How many times a loan can roll over before it must be settled or marked defaulted.">Max rollover months</span>
+          <div class="sc-row-actions">
+            <input type="number" id="maxRolloverInput" class="pill-select" min="0" max="24" style="width:90px;"/>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="customersPage" style="display:none">
+      <!-- Two columns: the existing customer list on the left (now a
+           shorter card), and a full-height 3-step "add customer" card on
+           the right. -->
+      <div id="customerListView" class="customers-split">
+        <div class="card settings-card customers-list-card">
+          <div class="chart-head">
+            <h2>Customers</h2>
+          </div>
+          <p class="settings-note">Upload a customer's ID and proof of residence and the platform scrapes their details, auto-filling the form beside this list as you type their name.</p>
+          <!-- No per-page search bar anymore — the nav-bar search
+               (#searchInput in the top navigation) filters this list. -->
+          <div id="customerList" class="customer-list"></div>
+        </div>
+
+        <!-- Fills the space left under the (short) customer list. Both
+             cards are capped in height and scroll internally, so this
+             column can never grow taller than the New customer card. -->
+        <div class="customers-side-row">
+          <div class="card customers-mini-card">
+            <div class="chart-head"><h2>Recent Loans incl. Interest</h2></div>
+            <table class="mini-table"><tbody id="recentLoansBody" data-recent-loans></tbody></table>
+          </div>
+          <div class="card customers-mini-card">
+            <div class="chart-head"><h2>Recent activity</h2></div>
+            <div class="activity-list" id="activityFeedList" data-activity-feed></div>
+          </div>
+        </div>
+
+        <!-- New customer — three steps: who they are, where they are,
+             then a review before saving. -->
+        <div class="card customers-add-card" id="customersAddCard">
+          <div class="nca-head">
+            <h2>New customer</h2>
+            <div class="nca-step-count" id="nca_stepCount">Step 1 of 3</div>
+          </div>
+
+          <div class="nca-progress">
+            <div class="nca-progress-track"><div class="nca-progress-fill" id="nca_progressFill"></div></div>
+            <div class="nca-steps">
+              <span class="nca-step active" data-step="1">Details</span>
+              <span class="nca-step" data-step="2">Address</span>
+              <span class="nca-step" data-step="3">Review</span>
+            </div>
+          </div>
+
+          <form id="newCustomerForm" class="nca-form" autocomplete="off">
+            <div class="nca-body">
+              <!-- Step 1 — who they are -->
+              <div class="nca-panel active" data-panel="1">
+                <p class="nca-hint">Only the name, gender and phone number are required. Anything left blank can be filled in later — the customer's folder shows a red <strong>!</strong> until their profile is complete.</p>
+                <div class="field">
+                  <label>Full name</label>
+                  <input id="nc_name" placeholder="e.g. Sarah Connor" autocomplete="off"/>
+                </div>
+                <div class="field">
+                  <label>Gender</label>
+                  <select id="nc_gender">
+                    <option value="" selected disabled>Select gender…</option>
+                    <option value="Female">Female</option>
+                    <option value="Male">Male</option>
+                  </select>
+                </div>
+                <div class="field"><label>Phone</label><input id="nc_phone" placeholder="e.g. 082 123 4567 (auto-formatted to +27)"/></div>
+                <div class="field"><label>Email <span class="nca-optional">optional</span></label><input type="email" id="nc_email" placeholder="e.g. sarah@example.com"/></div>
+              </div>
+
+              <!-- Step 2 — where they are -->
+              <div class="nca-panel" data-panel="2">
+                <p class="nca-hint">Used for affordability checks and to place this customer on the dashboard map. Only the province is required here.</p>
+                <div class="field"><label>ID number <span class="nca-optional">optional</span></label><input id="nc_idNumber" placeholder="e.g. 9001015800083"/></div>
+                <div class="field"><label>Address <span class="nca-optional">optional</span></label><input id="nc_address" placeholder="Street, suburb, city"/></div>
+                <div class="field">
+                  <label>Province</label>
+                  <select id="nc_province">
+                    <option value="" selected disabled>Select a province…</option>
+                    <option value="GP">Gauteng</option>
+                    <option value="WC">Western Cape</option>
+                    <option value="EC">Eastern Cape</option>
+                    <option value="KZN">KwaZulu-Natal</option>
+                    <option value="FS">Free State</option>
+                    <option value="NW">North West</option>
+                    <option value="MP">Mpumalanga</option>
+                    <option value="LP">Limpopo</option>
+                    <option value="NC">Northern Cape</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Step 3 — check it over, add notes, save -->
+              <div class="nca-panel" data-panel="3">
+                <p class="nca-hint">Check the details below, then create the customer. Blanks are fine — they can be completed later from the customer's page.</p>
+                <div class="nca-review" id="nca_review"></div>
+                <div class="nca-review-note" id="nca_reviewNote" style="display:none"></div>
+                <div class="field"><label>Notes <span class="nca-optional">optional</span></label><textarea id="nc_notes" placeholder="Anything worth remembering about this customer"></textarea></div>
+              </div>
+            </div>
+
+            <div class="nca-error" id="nca_error"></div>
+
+            <div class="nca-actions">
+              <button type="button" class="btn-ghost" id="nca_backBtn">Back</button>
+              <button type="button" class="btn-primary" id="nca_nextBtn">Continue</button>
+              <button type="submit" class="btn-primary" id="nca_saveBtn">Create customer</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+<div id="customerDetailView" style="display:none">
+        <button type="button" class="cust-detail-back" id="cd_backBtn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Back to customers
+        </button>
+        <div class="cust-detail-page">
+
+          <div class="cd-card cd-summary-card">
+            <div class="cd-header">
+              <div class="cd-header-id">
+                <div class="cd-profile-avatar" id="cd_avatar"></div>
+                <div>
+                  <h3><span id="cd_name">Customer</span></h3>
+                  <div class="cd-profile-sub" id="cd_profileSub">Customer</div>
+                  <div class="cust-detail-id" id="cd_id"></div>
+                </div>
+              </div>
+              <div class="cust-detail-pills" id="cd_pills"></div>
+            </div>
+
+            <div class="cd-stat-bar" id="cd_summary"></div>
+          </div>
+
+          <div class="cd-tabs" id="cd_tabs">
+            <button type="button" class="cd-tab active" data-tab="overview">Overview</button>
+            <button type="button" class="cd-tab" data-tab="loans">Loans</button>
+            <button type="button" class="cd-tab" data-tab="documents">Documents</button>
+            <button type="button" class="cd-tab" data-tab="notes">Notes</button>
+          </div>
+
+          <div class="cd-tabpanel" data-panel="overview">
+            <div class="cd-section-head"><h2>Personal information</h2><button type="button" class="cd-card-action" id="cd_editToggle">✎ Edit</button></div>
+            <div class="cust-detail-card cust-detail-card--flat">
+              <div class="cust-detail-row"><span class="cd-label">Phone</span><span class="cd-value" id="cd_phone">—</span></div>
+              <div class="cust-detail-row"><span class="cd-label">Email</span><span class="cd-value" id="cd_email">—</span></div>
+              <div class="cust-detail-row"><span class="cd-label">ID number</span><span class="cd-value" id="cd_idNumber">—</span></div>
+              <div class="cust-detail-row"><span class="cd-label">Address</span><span class="cd-value" id="cd_address">—</span></div>
+            </div>
+
+            <div class="customer-info-fields" id="cd_editFields">
+              <div class="field"><label>Phone</label><input id="cd_f_phone"/></div>
+              <div class="field"><label>Email</label><input id="cd_f_email"/></div>
+              <div class="field"><label>ID number</label><input id="cd_f_idNumber"/></div>
+              <div class="field"><label>Address</label><input id="cd_f_address"/></div>
+              <div class="field">
+                <label>Province</label>
+                <select id="cd_f_province">
+                  <option value="">Not set</option>
+                  <option value="GP">Gauteng</option>
+                  <option value="WC">Western Cape</option>
+                  <option value="EC">Eastern Cape</option>
+                  <option value="KZN">KwaZulu-Natal</option>
+                  <option value="FS">Free State</option>
+                  <option value="NW">North West</option>
+                  <option value="MP">Mpumalanga</option>
+                  <option value="LP">Limpopo</option>
+                  <option value="NC">Northern Cape</option>
+                </select>
+              </div>
+              <div class="customer-info-actions">
+                <button type="button" class="btn-secondary" id="cd_saveBtn">Save changes</button>
+                <button type="button" class="btn-remove-customer" id="cd_removeBtn" title="Remove this customer">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+                <span class="customer-info-saved" id="cd_savedBadge">Saved ✓</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="cd-tabpanel" data-panel="loans" style="display:none">
+            <div class="cd-section-head">
+              <h2>Active loans</h2>
+              <button type="button" class="cd-card-action" id="cd_bulkPaidBtn" style="display:none">Mark selected as paid</button>
+            </div>
+            <div class="cd-loan-list" id="cd_loansActive"></div>
+            <div class="cd-section-head cd-section-head--spaced"><h2>Repaid loans</h2></div>
+            <div class="cd-loan-list cd-loan-list--repaid" id="cd_loansSettled"></div>
+          </div>
+
+          <div class="cd-tabpanel" data-panel="documents" style="display:none">
+            <div class="cd-section-head"><h2>Documents</h2></div>
+            <div class="cd-doc-grid" id="cd_docs"></div>
+          </div>
+
+          <div class="cd-tabpanel" data-panel="notes" style="display:none">
+            <div class="cd-section-head"><h2>Notes</h2></div>
+            <textarea id="cd_f_notes" class="cd-notes-textarea" placeholder="Add notes about this customer..."></textarea>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Loans — its own page now (the nav pill used to just scroll the
+         dashboard). Carries copies of the Recent loans and Recent
+         activity cards from the Customers page; the renderers fill every
+         copy via the data-recent-loans / data-activity-feed hooks. -->
+    <div id="loansPage" style="display:none">
+      <div class="loans-split">
+        <div class="card customers-mini-card loans-mini-a">
+          <div class="chart-head"><h2>Recent Loans incl. Interest</h2></div>
+          <table class="mini-table"><tbody data-recent-loans></tbody></table>
+        </div>
+        <!-- Second row: a narrower activity feed beside the exposure card. -->
+        <div class="loans-row2">
+          <div class="card customers-mini-card">
+            <div class="chart-head"><h2>Recent activity</h2></div>
+            <div class="activity-list" data-activity-feed></div>
+          </div>
+
+          <!-- Who owes the most right now: outstanding balance across every
+               unpaid loan, biggest exposure first. -->
+          <div class="card customers-mini-card">
+            <div class="chart-head"><h2>Top borrowers this month</h2></div>
+            <div class="expo-list" id="exposureList"></div>
+          </div>
+        </div>
+
+        <!-- Automated Monthly Reminders — a tall card down the right-hand
+             side, same full height as the New customer card on the
+             Customers page (it spans both rows of the grid). -->
+        <div class="card amr-card" id="amrCard">
+          <div class="amr-head">
+            <h2>Automated Monthly Reminders</h2>
+            <p class="amr-sub">Send a WhatsApp reminder about an upcoming payment — one customer, or everyone, whenever you like.</p>
+          </div>
+
+          <div class="amr-body">
+            <div class="amr-section">
+              <div class="amr-section-title">Sending from</div>
+
+              <div class="amr-toggle-row amr-toggle-row--static">
+                <span class="amr-ch">
+                  <span class="amr-ch-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3.5 20.5l1.7-4.7A8.5 8.5 0 1 1 21 11.5z"/><path d="M8.6 9.2c0 3.2 2.6 5.8 5.8 5.8l1.2-1.6-2-1-.9 1a5.2 5.2 0 0 1-2.5-2.5l1-.9-1-2z"/></svg>
+                  </span>
+                  <span class="amr-ch-text">
+                    <span class="amr-ch-name">WhatsApp reminder</span>
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            <div class="amr-section">
+              <div class="amr-section-title">Message <span class="amr-locked">fixed</span></div>
+              <!-- Read-only by design: the wording is standardised, so this
+                   is rendered text, not an input. -->
+              <div class="amr-template amr-template--locked" id="amr_template" aria-readonly="true"></div>
+            </div>
+
+            <div class="amr-section amr-section--grow">
+              <div class="amr-section-title">Upcoming payments</div>
+              <div class="amr-queue" id="amr_queue"></div>
+            </div>
+          </div>
+
+          <div class="amr-foot">
+            <div class="amr-status" id="amr_status"></div>
+            <div class="amr-actions">
+              <button type="button" class="btn-ghost" id="amr_previewBtn">Preview</button>
+              <button type="button" class="btn-primary" id="amr_sendAllBtn">Send all now<span class="amr-badge" id="amr_waitingBadge" style="display:none">0</span></button>
+            </div>
+            <div class="amr-hint-line">Click any customer in the list above to remind just them.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="expensesPage" style="display:none">
+      <div class="xg">
+
+        <!-- 1. Overview: pie + collected / expenses / net -->
+        <section class="card xp xp-over">
+          <div class="xp-head"><h2>Overview</h2><span class="xp-sub" id="expPeriodLbl"></span></div>
+          <div class="xo-body">
+            <div class="xo-pie">
+              <svg id="expPieChart" viewBox="142 32 196 196" class="donut-svg"></svg>
+              <div class="xo-pie-center"><small>Net</small><b id="expStatsValue">R0</b></div>
+            </div>
+            <div class="xo-totals">
+              <div><small>Collected</small><b id="expCollectedValue">R0</b></div>
+              <div><small>Expenses</small><b id="expTotalValue">R0</b></div>
+              <div><small>Spend vs last month</small><b id="expMomQuick">–</b></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. Cash & capital -->
+        <section class="card xp xp-cash">
+          <div class="xp-head"><h2>Cash &amp; Capital</h2><span class="xp-badge" id="cashBadge"></span></div>
+          <div class="xc-main"><small>Available to lend</small><b id="cashAvail">R0</b></div>
+          <div class="xc-grid">
+            <div><small>Lent out (active)</small><b id="cashLent">R0</b></div>
+            <div><small>Capital added</small><b id="cashCap">R0</b></div>
+            <div><small>Owner draws</small><b id="cashDraw">R0</b></div>
+          </div>
+          <div class="xc-min">
+            <label for="minCashInput">Alert me below</label>
+            <input id="minCashInput" type="number" min="0" placeholder="R 0"/>
+          </div>
+          <div class="xc-top" id="cashTopup"></div>
+          <div class="xc-recent" id="cashRecent"></div>
+          <div class="xc-actions">
+            <button class="xbtn xbtn-primary" id="cashAddCapBtn">＋ Add capital</button>
+            <button class="xbtn" id="cashWithdrawBtn">− Withdraw</button>
+          </div>
+        </section>
+
+        <!-- 3. Budgets (also doubles as Top Spending, sorted by spend) -->
+        <section class="card xp xp-bud">
+          <div class="xp-head"><h2>Budgets · Top spending</h2><span class="xp-sub" id="budSummary"></span></div>
+          <div id="budList" class="xb-list"></div>
+        </section>
+
+        <!-- 4. Trends, month-over-month and forecast -->
+        <section class="card xp xp-trend">
+          <div class="xp-head"><h2>Trends &amp; forecast</h2><span class="xp-sub" id="trendLbl"></span></div>
+          <div class="xt-mom" id="momRow"></div>
+          <svg id="trendChart" class="xt-chart" viewBox="0 0 300 84" preserveAspectRatio="none"></svg>
+          <div class="xt-labels" id="trendLabels"></div>
+          <div class="xt-legend"><span><i class="lg-col"></i>Collected</span><span><i class="lg-exp"></i>Expenses</span></div>
+          <div class="xt-fc" id="fcRows"></div>
+        </section>
+
+        <!-- 5. Transactions / capital log / recurring -->
+        <section class="card xp xp-tx">
+          <div class="xp-head xp-tabs">
+            <div class="xtabs" id="xTabs">
+              <button data-xtab="tx" class="active">Transactions</button>
+              <button data-xtab="cap">Capital log</button>
+              <button data-xtab="rec">Recurring</button>
+            </div>
+            <div class="xtools" id="xToolsTx">
+              <input id="xSearch" type="search" placeholder="Search…"/>
+              <select id="xCat"><option value="all">All</option><option>Rent</option><option>Salaries</option><option>Transport</option><option>Utilities</option><option>Marketing</option><option>Other</option><option>Capital</option><option>Withdrawal</option></select>
+              <button class="xbtn" id="xCsv" title="Download this list as CSV">CSV</button>
+              <button class="xbtn" id="xPdf" title="Print / save as PDF statement">PDF</button>
+              <button class="xbtn xbtn-primary" id="addExpenseBtn" title="Add expense or capital">＋ Add</button>
+            </div>
+          </div>
+          <div id="xBody" class="xbody"></div>
+          <div class="xpager" id="xPager"></div>
+        </section>
+
+      </div>
+    </div>
+    <div id="financePage" style="display:none">
+      <div class="fin-grid">
+        <div class="fin-col-left">
+          <div class="card fin-upload-card">
+            <div class="chart-head"><h2>Upload document</h2></div>
+            <p class="settings-note">Upload a bank statement, ID document, or proof of address (PDF). We'll pull the text out, turn it into transactions, and — soon — auto-categorize each one.</p>
+
+            <div class="fin-dropzone" id="finDropzone">
+              <div class="fin-dropzone-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+              </div>
+              <div class="fin-dropzone-text">Drag a PDF here, or <span class="fin-browse-link">browse</span></div>
+              <input type="file" id="finFileInput" accept="application/pdf" multiple hidden />
+            </div>
+
+            <div class="field" style="margin-top:14px;">
+              <label>Document type</label>
+              <select id="finDocType">
+                <option value="bank_statement">Bank statement</option>
+                <option value="id_document">ID document</option>
+                <option value="proof_of_address">Proof of address</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Customer</label>
+              <input list="finCustomerList" id="finCustomer" placeholder="e.g. Sarah Connor" />
+              <datalist id="finCustomerList"></datalist>
+              <span class="field-optional">Setting up a brand-new customer? Type their name here (even before they exist as a customer) and their ID number/address/phone will auto-fill when you type the same name on the New Customer form.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="fin-col-right">
+          <div class="card fin-docs-card">
+            <div class="chart-head"><h2>Uploaded documents</h2><span class="fin-doc-count" id="finDocCount"></span></div>
+            <div class="fin-filter-chips" id="finDocFilters">
+              <button class="fin-chip active" data-filter="all">All</button>
+              <button class="fin-chip" data-filter="bank_statement">Bank statements</button>
+              <button class="fin-chip" data-filter="id_document">ID documents</button>
+              <button class="fin-chip" data-filter="proof_of_address">Proof of address</button>
+              <div class="icon-btn fin-doc-customer-btn" id="finDocCustomerBtn" title="Filter by customer">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5"/><circle cx="18" cy="8" r="2.7"/><path d="M16 13.6c2.9.5 5 3 5 6.4"/></svg>
+              </div>
+            </div>
+            <div id="finDocList" class="fin-doc-list">
+              <div class="fin-empty">No documents uploaded yet.</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    <div id="riskPage" style="display:none">
+      <div class="card fin-upload-card" style="max-width:520px;">
+        <div class="chart-head"><h2>Select customer</h2></div>
+        <div class="field">
+          <label>Customer</label>
+          <input list="riskCustomerList" id="riskCustomer" placeholder="Start typing a name…" />
+          <datalist id="riskCustomerList"></datalist>
+        </div>
+      </div>
+
+      <div id="riskProfileWrap" style="display:none;margin-top:18px;">
+        <div class="risk-feature-grid" id="riskFeatureGrid"></div>
+
+        <div class="fin-grid" style="margin-top:18px;">
+          <div class="fin-col-left">
+            <div class="card">
+              <div class="chart-head"><h2>Loan history risk</h2></div>
+              <div class="risk-panel" id="riskLoanPanel"></div>
+            </div>
+          </div>
+
+          <div class="fin-col-right">
+            <div class="card">
+              <div class="chart-head"><h2>Spending behavior (from uploaded statements)</h2></div>
+              <div id="riskFinancePanel"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="riskEmptyState" class="fin-empty" style="margin-top:16px;">Pick a customer above to see their combined risk profile.</div>
+    </div>
+  </div>
+</div>
+
+<div class="chart-tooltip" id="chartTooltip"></div>
+
+<!-- Reminder send queue — walks the due reminders one at a time so
+     nothing is lost and the browser isn't flooded with tabs. WhatsApp
+     must be sent by hand from the TrackLend Business App number; email
+     goes out by itself when SMTP is configured. -->
+<div class="modal-overlay" id="amrQueueOverlay">
+  <div class="modal amr-q-modal">
+    <div class="amr-qm-head">
+      <div>
+        <h2>Send reminders</h2>
+        <div class="amr-qm-sub" id="amr_qmProgress">Reminder 1 of 1</div>
+      </div>
+      <button type="button" class="amr-qm-close" id="amr_qmClose" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="amr-qm-track"><div class="amr-qm-fill" id="amr_qmFill"></div></div>
+
+    <div class="amr-qm-body" id="amr_qmBody">
+      <div class="amr-qm-who">
+        <div class="amr-qm-name" id="amr_qmName">—</div>
+        <div class="amr-qm-meta" id="amr_qmMeta">—</div>
+      </div>
+
+      <div class="amr-qm-msg" id="amr_qmMsg"></div>
+
+      <div class="amr-qm-channels" id="amr_qmChannels"></div>
+
+      <div class="amr-qm-from">
+        Sends from the TrackLend WhatsApp Business number
+        <strong>+27&nbsp;79&nbsp;571&nbsp;9941</strong> — make sure that account is the
+        one signed in on this device.
+      </div>
+    </div>
+
+    <div class="amr-qm-foot">
+      <button type="button" class="btn-ghost" id="amr_qmSkip">Skip</button>
+      <button type="button" class="btn-ghost" id="amr_qmFix" style="display:none">Add number</button>
+      <button type="button" class="btn-primary" id="amr_qmOpen">Open WhatsApp</button>
+      <button type="button" class="btn-primary" id="amr_qmNext">Mark sent &amp; next</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal wizard">
+    <div class="wizard-topbar">
+      <button type="button" class="wizard-icon-btn" id="wizardBackBtn" aria-label="Back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="wizard-title" id="wizardTitle">New Loan</div>
+      <button type="button" class="wizard-icon-btn" id="wizardCloseBtn" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="wizard-progress">
+      <div class="wizard-progress-track"><div class="wizard-progress-fill" id="wizardProgressFill"></div></div>
+      <div class="wizard-step-label" id="wizardStepLabel">Step 1/4</div>
+    </div>
+
+    <form id="loanForm" class="wizard-body">
+
+      <!-- Step 1 — Customer -->
+      <div class="step-panel active" data-step="1">
+        <div class="step-heading">
+          <h4>Who is this loan for?</h4>
+          <p>Choose an existing customer. New customers must be created (with full details) from the Customers page before they can borrow.</p>
+        </div>
+        <div class="field">
+          <label>Customer</label>
+          <select required id="f_name"></select>
+        </div>
+        <div class="risk-panel" id="f_risk">Select a customer to see their risk profile.</div>
+        <div class="wizard-empty-state" id="f_noCustomers" style="display:none;">
+          <p>No customers are set up yet — create one first, with their full details, before lending to them.</p>
+          <button type="button" class="btn-secondary" id="f_goCreateCustomer">+ New customer</button>
+        </div>
+      </div>
+
+      <!-- Step 2 — Loan amount -->
+      <div class="step-panel" data-step="2">
+        <div class="step-heading">
+          <h4>Choose the loan amount</h4>
+          <p>Set the principal — interest is calculated automatically at the standard 40% cycle rate.</p>
+        </div>
+        <div class="amount-card">
+          <div class="amount-card-label">Amount in Rand</div>
+          <div class="amount-card-value"><span>R</span><span id="f_amountBig">0</span></div>
+          <input type="range" id="f_amountSlider" min="100" max="20000" step="100" value="1000"/>
+          <div class="amount-range-labels"><span>R100</span><span>R20 000</span></div>
+          <div class="amount-custom-row">
+            <label for="f_amountCustom">or type an exact amount</label>
+            <div class="amount-custom-input"><span>R</span><input id="f_amountCustom" type="number" min="1" placeholder="1000"/></div>
+          </div>
+        </div>
+        <input required id="f_amount" type="number" min="1" class="sr-only-input" placeholder="1000"/>
+        <div class="preview" id="f_preview">Interest: R0 · Total due: R0</div>
+        <div class="amount-pie-card">
+          <svg class="amount-pie" id="f_amountPie" viewBox="0 0 120 120">
+            <circle class="amount-pie-track" cx="60" cy="60" r="50"/>
+            <circle class="amount-pie-fill" id="f_amountPieFill" cx="60" cy="60" r="50" transform="rotate(-90 60 60)"/>
+          </svg>
+          <div class="amount-pie-info">
+            <div class="amount-pie-row"><span class="dot dot-primary"></span>This loan <span id="f_pieBorrowed">R0</span></div>
+            <div class="amount-pie-row"><span class="dot dot-fade"></span>Left after expenses <span id="f_pieRemaining">R0</span></div>
+            <div class="amount-pie-note" id="f_pieNote"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 — Details -->
+      <div class="step-panel" data-step="3">
+        <div class="step-heading">
+          <h4>Loan details</h4>
+          <p>Set when the loan is issued and when it's due to be repaid.</p>
+        </div>
+        <div class="field"><label>Date issued</label><input required id="f_date" type="date"/></div>
+        <div class="field"><label>Repayment date</label><input required id="f_repaymentDate" type="date"/></div>
+        <p class="step-subnote">If this date passes without the loan being marked paid, it counts as late against this customer's score — the same way a missed payment picked up from bank statement OCR does.</p>
+      </div>
+
+      <!-- Step 4 — Review & confirm -->
+      <div class="step-panel" data-step="4">
+        <div class="step-heading">
+          <h4>Review &amp; confirm</h4>
+          <p>Double check the details below before adding this loan.</p>
+        </div>
+        <div class="review-summary" id="f_summary"></div>
+        <p class="step-subnote">A removal password is generated automatically and emailed to you along with these details — you won't need to remember it, but you can copy it below.</p>
+        <div class="field"><label>Removal password</label><input required id="f_password" type="text" readonly/></div>
+      </div>
+
+    </form>
+
+    <div class="wizard-footer">
+      <button type="button" class="btn-secondary" id="wizardSecondaryBtn">Cancel</button>
+      <button type="button" class="btn-primary" id="wizardNextBtn">Continue</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="detailOverlay">
+  <div class="modal">
+    <h3>Loan details <span class="status-pill" id="d_statusPill"></span></h3>
+    <form id="detailForm">
+      <div class="field"><label>Customer name</label><input required id="d_name"/></div>
+      <div class="risk-panel" id="d_risk"></div>
+      <div class="field"><label>Principal (R)</label><input required id="d_amount" type="number" min="1"/></div>
+      <div class="preview" id="d_preview">Interest: R0 · Total due: R0</div>
+      <div class="field"><label>Cycle</label><input id="d_cycleInfo" disabled/></div>
+      <div class="field"><label>Date disbursed</label><input required id="d_date" type="date"/></div>
+      <div class="field"><label>Status</label><select id="d_status"><option value="active">Active</option><option value="rolled">Rolled over</option><option value="defaulted">Defaulted</option></select></div>
+      <div class="field" id="d_daysLateField"><label>Repayment timing — days late (negative = early, 0 = on time)</label><input id="d_daysLate" type="number" placeholder="0"/></div>
+      <div class="field"><label>Notes</label><textarea id="d_notes"></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-danger" id="deleteBtn">Delete</button>
+        <button type="button" class="btn-secondary" id="detailCancelBtn">Cancel</button>
+        <button type="submit" class="btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="importEncOverlay">
+  <div class="modal">
+    <h3>Decrypt backup</h3>
+    <p class="settings-note" style="margin-top:-10px;">Enter the passphrase used to encrypt this backup.</p>
+    <form id="importEncForm">
+      <div class="field"><label>Passphrase</label><input required type="password" id="ie_pass" autocomplete="current-password" placeholder="Enter the passphrase"/></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" id="ie_cancelBtn">Cancel</button>
+        <button type="submit" class="btn-primary">Decrypt and import</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="exportEncOverlay">
+  <div class="modal">
+    <h3>Export encrypted backup</h3>
+    <p class="settings-note" style="margin-top:-10px;">TrackLend generates a strong random passphrase and encrypts your backup with AES-256-GCM. The passphrase is downloaded alongside it as a Markdown note, ready to file in Obsidian.</p>
+    <form id="exportEncForm">
+      <div class="field">
+        <label>Generated passphrase</label>
+        <div class="pw-generated-row">
+          <input readonly type="text" id="ee_pass" autocomplete="off"/>
+          <button type="button" class="btn-ghost" id="ee_regenBtn" title="Generate a new passphrase">↻</button>
+          <button type="button" class="btn-ghost" id="ee_copyBtn" title="Copy passphrase">Copy</button>
+        </div>
+        <div class="pw-strength-track"><div class="pw-strength-fill" id="ee_strengthFill"></div></div>
+        <div class="pw-strength-label" id="ee_strengthLabel"></div>
+      </div>
+      <p class="settings-note">This passphrase will also be saved to a <strong>.md</strong> file (dated for this month) — keep it in your Obsidian vault so it isn't lost.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" id="ee_cancelBtn">Cancel</button>
+        <button type="submit" class="btn-primary">Encrypt and download</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="expenseModalOverlay">
+  <div class="modal">
+    <h3>Add expense</h3>
+    <form id="expenseForm">
+      <div class="field"><label>Description</label><input id="exp_description" placeholder="e.g. Office rent"/></div>
+      <div class="field"><label>Category</label>
+        <select id="exp_category">
+          <option value="Rent">Rent</option>
+          <option value="Salaries">Salaries</option>
+          <option value="Transport">Transport</option>
+          <option value="Utilities">Utilities</option>
+          <option value="Marketing">Marketing</option>
+          <option value="Other" selected>Other</option>
+        </select>
+      </div>
+      <div class="field"><label>Amount (R)</label><input required id="exp_amount" type="number" min="1" placeholder="500"/></div>
+      <div class="field"><label>Day of month (this month)</label><input required id="exp_date" type="number" min="1" max="31" placeholder="1–31"/></div>
+      <div class="field"><label>Receipt (optional photo)</label><input id="exp_receipt" type="file" accept="image/*"/></div>
+      <label class="x-check"><input type="checkbox" id="exp_recurring"/> Repeat every month (recurring)</label>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="expenseCancelBtn">Cancel</button>
+        <button type="submit" class="btn-primary">Add expense</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Shown first when the + button on the Expenses page is pressed, so the
+     user picks whether they're logging a spend or adding capital to the
+     lending pool before either form (#expenseModalOverlay / #capitalModalOverlay) opens. -->
+<div class="modal-overlay" id="expenseChoiceOverlay">
+  <div class="modal modal-sm">
+    <h3>Add</h3>
+    <div class="choice-list">
+      <button type="button" class="choice-btn" id="chooseTrackExpense">
+        <span class="choice-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><circle cx="12" cy="13" r="2.3"/></svg></span>
+        <span class="choice-text">
+          <span class="choice-title">Track Expense</span>
+          <span class="choice-sub">Log money spent this month</span>
+        </span>
+      </button>
+      <button type="button" class="choice-btn" id="chooseAddCapital">
+        <span class="choice-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></span>
+        <span class="choice-text">
+          <span class="choice-title">Add Capital</span>
+          <span class="choice-sub">Add funds to the lending pool</span>
+        </span>
+      </button>
+      <button type="button" class="choice-btn" id="chooseWithdraw">
+        <span class="choice-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg></span>
+        <span class="choice-text">
+          <span class="choice-title">Owner Withdrawal</span>
+          <span class="choice-sub">Take money out for yourself</span>
+        </span>
+      </button>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn-secondary" id="choiceCancelBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="capitalModalOverlay">
+  <div class="modal">
+    <h3 id="capTitle">Add capital</h3>
+    <form id="capitalForm">
+      <div class="field"><label>Description</label><input id="cap_description" placeholder="e.g. Owner injection"/></div>
+      <div class="field"><label id="cap_sourceLbl">Source</label>
+        <select id="cap_source"><option>Owner</option><option>Partner</option><option>Investor</option><option>Loan</option><option>Other</option></select>
+      </div>
+      <div class="field"><label>Amount (R)</label><input required id="cap_amount" type="number" min="1" placeholder="5000"/></div>
+      <div class="field"><label>Day of month (this month)</label><input required id="cap_date" type="number" min="1" max="31" placeholder="1–31"/></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="capitalCancelBtn">Cancel</button>
+        <button type="submit" class="btn-primary" id="capSubmit">Add capital</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="receiptOverlay"><img id="receiptImg" alt="Receipt" style="max-width:90vw;max-height:88vh;border-radius:10px;background:#fff"/></div>
+
+<div class="offline-banner" id="offlineBanner">You're offline — showing the last loaded data. Changes will fail to save until you're back online.</div>
+
+</div><!-- #appRoot -->
+
+<script src="script.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(err => console.error('SW registration failed:', err));
+    });
+  }
+  const offlineBanner = document.getElementById('offlineBanner');
+  function updateOnlineStatus(){ offlineBanner.classList.toggle('show', !navigator.onLine); }
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+  updateOnlineStatus();
+</script>
+
+
+</body>
+</html>
